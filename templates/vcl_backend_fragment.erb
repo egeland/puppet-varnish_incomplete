@@ -1,1 +1,12 @@
-# Backend template for <%= ip -%> on port <%= port %>
+backend <%= @name -%> {
+  .host  = "<%= @host -%>";
+  .port  = "<%= @port -%>";
+  .probe = {
+    .url       = "<%= @probe_url -%>";
+    .timeout   = <%= @probe_timeout -%> ms;
+    .interval  = <%= @probe_interval -%>s;
+    .window    = <%= @probe_window -%>;
+    .threshold = <%= @probe_threshold -%>;
+  }
+}
+

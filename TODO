@@ -1,0 +1,3 @@
+* Make director know about backends without explicitly needing a list
+* Allow custom files to be included in the final vcl
+* Many other things..

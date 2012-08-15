@@ -1,0 +1,6 @@
+director <%= @name -%> <%= @policy -%> {
+<% @backends.each do |backend| -%>
+  { .backend = <%= @backend -%>; }
+<% end -%>
+}
+

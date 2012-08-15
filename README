@@ -1,0 +1,21 @@
+How to use this module.
+In the node definition, do something like this:
+
+include varnish
+
+varnish::backend{ 'be1':
+  host            => 'my.backendhost.example.com',
+  port            => '8080',
+  probe_url       => '/probe.cgi',
+  probe_timeout   => '50',
+  probe_interval  => '1',
+  probe_window    => '3',
+  probe_threshold => '7',
+}
+
+varnish::director{ 'dir1':
+  backends => [ 'be1', ],    # backends must be an array, even if there's just one
+  policy   => 'round-robin', # policies are detailed here https://www.varnish-cache.org/docs/3.0/reference/vcl.html#directors
+}
+
+
