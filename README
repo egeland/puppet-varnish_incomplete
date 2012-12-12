@@ -19,3 +19,18 @@ varnish::director{ 'dir1':
 }
 
 
+It is very important to have an default-director. This director will be used for every traffic, which is not explicit defined.
+
+varnish::director{ 'default_director':
+  backends => [ 'be0', ],    # backends must be an array, even if there's just one
+  policy   => 'round-robin', # policies are detailed here https://www.varnish-cache.org/docs/3.0/reference/vcl.html#directors
+}
+
+
+class {'varnish::vhost':
+  vhosts_data => { 
+    'site1.domain' => 'director1', 
+    'site2.domain' => 'director1',
+    'site3.domain' => 'director2',
+  }
+}
