@@ -12,5 +12,6 @@ define varnish::backend($host,
     target  => $varnish::params::vclfilename,
     content => template("varnish/vcl_backend_fragment.erb"),
     order   => 4,
+    notify => Class["varnish::service"]
   }
 }

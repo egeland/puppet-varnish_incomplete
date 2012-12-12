@@ -3,5 +3,6 @@ define varnish::director($backends,$policy='round-robin') {
     target  => $varnish::params::vclfilename,
     content => template("varnish/vcl_director_fragment.erb"),
     order   => 5,
+    notify => Class["varnish::service"],
   }
 }
