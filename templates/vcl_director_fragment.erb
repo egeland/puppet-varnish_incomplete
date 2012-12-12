@@ -1,6 +1,8 @@
-director <%= @name -%> <%= @policy -%> {
-<% @backends.each do |backend| -%>
-  { .backend = <%= @backend -%>; }
+director <%= name -%> <%= policy -%> {
+<% backends.each do |backend| -%>
+  { .backend = <%= backend %>; .weight = 1; }
 <% end -%>
 }
+
+
 
