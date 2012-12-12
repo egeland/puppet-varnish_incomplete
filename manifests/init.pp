@@ -1,5 +1,5 @@
 class varnish {
-  include varnish::params
+  include varnish::params, varnish::service
   include concat::setup
   package {$varnish::params::packagename:
     ensure => present,
