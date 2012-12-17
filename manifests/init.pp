@@ -29,6 +29,7 @@ class varnish {
   concat::fragment{'vcl vhost header':
     target  => $varnish::params::vclfilename,
     content => 'sub vcl_recv { 
+set req.backend = default_director;
 ',
     order   => 6,
   }
