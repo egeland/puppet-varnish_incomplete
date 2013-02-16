@@ -110,6 +110,12 @@ sub vcl_recv {
                 error 200 "Ban added";
         }
 
+        if (req.http.Cache-Control ~ "no-cache") {
+                if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
+                ban (req.url);
+                }
+        }
+	
 	return(lookup);
 
 }
