@@ -175,21 +175,6 @@ sub vcl_fetch {
 		remove beresp.http.Pragma;
 	}
 
-	 /* if (req.http.host ~ "^(www\.)?gallery.benjamin-richter\.de$") {
-		if (req.url ~ "wp-(login|admin)" || req.url ~ "preview=true" || req.url ~ "xmlrpc.php") {
-    			return (hit_for_pass);
-  		}
-		if ( (!(req.url ~ "(wp-(login|admin)|login)")) || (req.request == "GET") ) {
-    		unset beresp.http.set-cookie;
-   		set beresp.ttl = 1h;
-  		}
-		if (req.url ~ "\.(gif|jpg|jpeg|swf|css|js|flv|mp3|mp4|pdf|ico|png)(\?.*|)$") {
-    		set beresp.ttl = 365d;
-  		} else {
-    		set beresp.do_esi = true;
-  		}
-	} */
-
 	# Don't allow static files to set cookies.
   	if (req.url ~ "(?i)\.(js|txt|gz|zip|lzma|bz2|tgz|tbz|png|gif|jpeg|jpg|ico|swf|css|flv|mp3|mp4|pdf)(\?[a-z0-9]+)?$") {
     		unset beresp.http.set-cookie;
