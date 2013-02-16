@@ -142,6 +142,11 @@ sub vcl_recv {
                 unset req.http.Pragma;
     }
 	
+	if (req.http.Authorization || req.http.Authenticate){
+                return (pass);
+    }
+
+	
 	return(lookup);
 
 }
