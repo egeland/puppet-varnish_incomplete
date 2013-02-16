@@ -134,6 +134,14 @@ sub vcl_recv {
                 }
         }
 	
+	if (req.url ~ "(?i)\.(js|txt|gz|zip|lzma|bz2|tgz|tbz|png|gif|jpeg|jpg|ico|swf|css|flv|mp3|mp4|pdf)(\?[a-z0-9]+)?$") {
+                set req.url = regsub(req.url, "\?.*$", "");
+                unset req.http.cookie;
+                unset req.http.Cache-Control;
+                unset req.http.Max-Age;
+                unset req.http.Pragma;
+    }
+	
 	return(lookup);
 
 }
