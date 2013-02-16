@@ -90,6 +90,12 @@ sub vcl_recv {
         return(pass);
         }
         
+    /* pipeline post requests trac #4124 https://www.varnish-cache.org/trac/ticket/849 */
+    if (req.request == "POST") {
+            return(pipe);
+    }
+	
+	
 	return(lookup);
 
 }
