@@ -183,10 +183,6 @@ sub vcl_hit {
 #		return(pass);
 #	}
 #
-#	if (obj.hits == 500) {
-#		set obj.ttl = 10w;
-#	}
-#
 	if (req.http.Cache-Control ~ "no-cache") {
 		if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
 		set obj.ttl = 0s;
