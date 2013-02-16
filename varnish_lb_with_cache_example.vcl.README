@@ -74,6 +74,22 @@ sub vcl_recv {
         	set req.grace = 10m;
         }
 	
+	if (req.request != "GET" &&
+        req.request != "HEAD" &&
+        req.request != "PUT" &&
+        req.request != "POST" &&
+        req.request != "TRACE" &&
+        req.request != "OPTIONS" &&
+        req.request != "DELETE") {
+        /* Non-RFC2616 or CONNECT which is weird. */
+        return(pipe);
+        }
+
+        if (req.request != "GET" && req.request != "HEAD") {
+        /* We only deal with GET and HEAD by default */
+        return(pass);
+        }
+        
 	return(lookup);
 
 }
