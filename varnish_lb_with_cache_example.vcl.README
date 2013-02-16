@@ -116,6 +116,8 @@ sub vcl_recv {
                 }
         }
 	
+	call normalize_user_agent;
+	
 	return(lookup);
 
 }
