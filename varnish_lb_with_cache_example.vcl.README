@@ -194,10 +194,10 @@ sub vcl_hit {
 		}	
 	}
 	
-#	if (req.request == "PURGE") {
- #               purge;
-  #              error 200 "Purged.";
-   #     }
+	if (req.request == "PURGE") {
+                purge;
+                error 200 "Purged.";
+        }
 	
 	return(deliver);
 }
