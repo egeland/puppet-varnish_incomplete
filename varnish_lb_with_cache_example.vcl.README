@@ -66,6 +66,14 @@ sub vcl_recv {
     }
 	
 	
+	# Use anonymous, cached pages if all backends are down.
+    if (!req.backend.healthy) {
+    		unset req.http.Cookie;
+        	set req.grace = 1d;
+        } else {
+        	set req.grace = 10m;
+        }
+	
 	return(lookup);
 
 }
