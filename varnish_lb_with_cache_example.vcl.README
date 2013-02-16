@@ -179,16 +179,17 @@ sub vcl_hash {
 
 sub vcl_hit {
 	
-#	if (obj.ttl<=0s){
-#		return(pass);
-#	}
-#
 	if (req.http.Cache-Control ~ "no-cache") {
 		if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
 		set obj.ttl = 0s;
 		return (restart);
 		}	
 	}
+
+	if (obj.ttl<=0s){
+		return(pass);
+	}
+
 	
 	if (req.request == "PURGE") {
                 purge;
