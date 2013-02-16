@@ -140,9 +140,10 @@ sub vcl_fetch {
     		set beresp.grace = 15s;
         }
 
-	if (beresp.status == 503) {
+        
+    /* if (beresp.status == 503) {
 		error 200;
-	}
+	} */
 
 	#Respect force-reload, and clear cache accordingly. This means that a ctrl-reload will acutally purge 
 	# the cache for this URL.
