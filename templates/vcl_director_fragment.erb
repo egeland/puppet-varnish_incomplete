@@ -1,8 +1,6 @@
 director <%= name -%> <%= policy -%> {
 <% backends.each do |backend| -%>
-  { .backend = <%= backend %>; .weight = 1; }
+  { .backend = <%= @backend %>; <% if @policy != "round-robin" %> .weight = 1; <% end %> }
 <% end -%>
 }
-
-
 
