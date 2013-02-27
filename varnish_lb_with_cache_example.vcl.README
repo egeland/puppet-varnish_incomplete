@@ -34,9 +34,119 @@ director default_director round-robin {
 
 
 #https://www.varnish-cache.org/trac/wiki/VCLExampleNormalizeUserAgent
+sub normalize_user_agent {
+    if (req.http.user-agent ~ "MSIE") {
+        set req.http.X-UA = "msie";
+    } else if (req.http.user-agent ~ "Firefox") {
+        set req.http.X-UA = "firefox";
+    } else if (req.http.user-agent ~ "Safari") {
+        set req.http.X-UA = "safari";
+    } else if (req.http.user-agent ~ "Opera Mini/") {
+        set req.http.X-UA = "opera-mini";
+    } else if (req.http.user-agent ~ "Opera Mobi/") {
+        set req.http.X-UA = "opera-mobile";
+    } else if (req.http.user-agent ~ "Opera") {
+        set req.http.X-UA = "opera";
+    } else {
+        set req.http.X-UA = "nomatch";
+    }
+}
 
 sub vcl_recv {
+
 	set req.backend = default_director;
+	
+	if (req.restarts == 0) {
+                if (req.http.x-forwarded-for) {
+                        set req.http.X-Forwarded-For =
+                                req.http.X-Forwarded-For + ", " + client.ip;
+                } else {
+                        set req.http.X-Forwarded-For = client.ip;
+                }
+    }
+	
+	
+	# Use anonymous, cached pages if all backends are down.
+    if (!req.backend.healthy) {
+    		unset req.http.Cookie;
+        	set req.grace = 1d;
+        } else {
+        	set req.grace = 10m;
+        }
+	
+	if (req.request != "GET" &&
+        req.request != "HEAD" &&
+        req.request != "PUT" &&
+        req.request != "POST" &&
+        req.request != "TRACE" &&
+        req.request != "OPTIONS" &&
+        req.request != "DELETE") {
+        /* Non-RFC2616 or CONNECT which is weird. */
+        return(pipe);
+        }
+
+        if (req.request != "GET" && req.request != "HEAD") {
+        /* We only deal with GET and HEAD by default */
+        return(pass);
+        }
+        
+    /* pipeline post requests trac #4124 https://www.varnish-cache.org/trac/ticket/849 */
+    if (req.request == "POST") {
+            return(pipe);
+    }
+	
+	
+	if (req.request == "PURGE") {
+                if (!client.ip ~ purge) {
+                error 405 "Not allowed.";
+                }
+                error 200 "Purged.";
+                return (lookup);
+        }
+
+        if (req.request == "BAN") {
+                ban("req.http.host == " + req.http.host +
+                        "&& req.url == " + req.url);
+                error 200 "Ban added";
+        }
+
+        if (req.http.Cache-Control ~ "no-cache") {
+                if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
+                ban (req.url);
+                }
+        }
+	
+	call normalize_user_agent;
+	
+	# @see: http:// varnish.projects.linpro.no/wiki/FAQ/Compression
+        if (req.http.Accept-Encoding) {
+                if (req.http.Accept-Encoding ~ "gzip") {
+                # If the browser supports it, we'll use gzip.
+                set req.http.Accept-Encoding = "gzip";
+                }
+                else if (req.http.Accept-Encoding ~ "deflate") {
+                # Next, try deflate if it is supported.
+                set req.http.Accept-Encoding = "deflate";
+                }
+                else {
+                # Unknown algorithm. Remove it and send unencoded.
+                unset req.http.Accept-Encoding;
+                }
+        }
+	
+	if (req.url ~ "(?i)\.(js|txt|gz|zip|lzma|bz2|tgz|tbz|png|gif|jpeg|jpg|ico|swf|css|flv|mp3|mp4|pdf)(\?[a-z0-9]+)?$") {
+                set req.url = regsub(req.url, "\?.*$", "");
+                unset req.http.cookie;
+                unset req.http.Cache-Control;
+                unset req.http.Max-Age;
+                unset req.http.Pragma;
+    }
+	
+	if (req.http.Authorization || req.http.Authenticate){
+                return (pass);
+    }
+
+	
 	return(lookup);
 
 }
@@ -69,26 +179,22 @@ sub vcl_hash {
 
 sub vcl_hit {
 	
-#	if (req.http.Cache-Control ~ "no-cache") {
-#		if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
-#		set obj.ttl = 0s;
-#		return (restart);
-#		}	
-#	}
-#
-#	if (obj.ttl<=0s){
-#		return(pass);
-#	}
-#
-#	if (obj.hits == 500) {
-#		set obj.ttl = 10w;
-#	}
-#
+	if (req.http.Cache-Control ~ "no-cache") {
+		if (! (req.http.Via || req.http.User-Agent ~ "bot|MSIE")) {
+		set obj.ttl = 0s;
+		return (restart);
+		}	
+	}
+
+	if (obj.ttl<=0s){
+		return(pass);
+	}
+
 	
-#	if (req.request == "PURGE") {
- #               purge;
-  #              error 200 "Purged.";
-   #     }
+	if (req.request == "PURGE") {
+                purge;
+                error 200 "Purged.";
+        }
 	
 	return(deliver);
 }
@@ -139,10 +245,11 @@ sub vcl_fetch {
     		set beresp.ttl = 15s;
     		set beresp.grace = 15s;
         }
-
-	if (beresp.status == 503) {
+        
+    /* if (beresp.status == 503) {
 		error 200;
-	}
+	} */
+
 
 	#Respect force-reload, and clear cache accordingly. This means that a ctrl-reload will acutally purge 
 	# the cache for this URL.
@@ -173,21 +280,6 @@ sub vcl_fetch {
 		remove beresp.http.ETag;
 		remove beresp.http.Pragma;
 	}
-
-	 /* if (req.http.host ~ "^(www\.)?gallery.benjamin-richter\.de$") {
-		if (req.url ~ "wp-(login|admin)" || req.url ~ "preview=true" || req.url ~ "xmlrpc.php") {
-    			return (hit_for_pass);
-  		}
-		if ( (!(req.url ~ "(wp-(login|admin)|login)")) || (req.request == "GET") ) {
-    		unset beresp.http.set-cookie;
-   		set beresp.ttl = 1h;
-  		}
-		if (req.url ~ "\.(gif|jpg|jpeg|swf|css|js|flv|mp3|mp4|pdf|ico|png)(\?.*|)$") {
-    		set beresp.ttl = 365d;
-  		} else {
-    		set beresp.do_esi = true;
-  		}
-	} */
 
 	# Don't allow static files to set cookies.
   	if (req.url ~ "(?i)\.(js|txt|gz|zip|lzma|bz2|tgz|tbz|png|gif|jpeg|jpg|ico|swf|css|flv|mp3|mp4|pdf)(\?[a-z0-9]+)?$") {
@@ -266,5 +358,3 @@ sub vcl_init {
 sub vcl_fini {
         return (ok);
 }
-
-
