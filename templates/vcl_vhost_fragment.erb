@@ -1,18 +1,18 @@
 <% i = 1 %>
 <% vhosts_data.each do |vhost, director| -%>
 <% if i == 1 %>
-if (req.http.host ~ "<%= vhost %>") { 
-  set req.backend = <%= director %>;
-}
+  if (req.http.host ~ "<%= vhost %>") { 
+    set req.backend = <%= director %>;
+  }
 <% end -%>
 <% if i > 1 %>
-elseif (req.http.host ~ "<%= vhost %>") { 
-  set req.backend = <%= director %>;
-}
+  elseif (req.http.host ~ "<%= vhost %>") { 
+    set req.backend = <%= director %>;
+  }
 <% end -%>
 <% i +=1 %>
 <% end -%>
-else {
-  set req.backend = default_director;
-}
+  else {
+    set req.backend = default_director;
+  }
 
