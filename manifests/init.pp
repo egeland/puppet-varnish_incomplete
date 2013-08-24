@@ -15,6 +15,7 @@ class varnish {
     onlyif  => 'test -f /etc/default/varnish',
   }
   concat{$varnish::params::vclfilename:
+    path  => $varnish::params::vclfilename,
     owner => 'root',
     group => 'root',
     mode  => '0644',
@@ -34,8 +35,8 @@ class varnish {
   }
   concat::fragment{'vcl vhost footer':
     target  => $varnish::params::vclfilename,
-    content => 'remove req.http.X-Forwarded-For;
-set req.http.X-Forwarded-For = client.ip;
+    content => '  remove req.http.X-Forwarded-For;
+  set req.http.X-Forwarded-For = client.ip;
 }
 ',
     order   => 8,
